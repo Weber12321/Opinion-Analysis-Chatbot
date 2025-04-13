@@ -1,3 +1,4 @@
+import uuid
 import streamlit as st
 from typing import Dict, List
 from langchain_core.messages import HumanMessage, AIMessage
@@ -129,7 +130,7 @@ with st.sidebar:
     )
 
     # Clear chat button
-    if st.button("清楚對話"):
+    if st.button("清除對話"):
         st.session_state.messages = []
         st.session_state.thread_id = None
         st.rerun()
