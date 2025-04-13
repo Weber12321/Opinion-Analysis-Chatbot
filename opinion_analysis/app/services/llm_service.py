@@ -1,5 +1,6 @@
 # app/services/ner_service.py
-import os
+import pandas as pd
+
 from typing import Dict
 
 from app.services.news_scraper import search_news
@@ -90,20 +91,19 @@ class LLMService:
         results_summary = []
 
         for data in analysis_results.values():
+            df = pd.DataFrame(data["ner"])
+            markdown_ner = df.to_markdown(index=False)
             results_summary.append(
                 f"""
 ## {data['title']}     
 ###### Published: {data['publish_date']}    
-##### 內文:       
+###### 內文:       
 {data['content']}      
-
-##### 摘要:      
+###### 摘要:      
 {data['summary']}   
-    
-##### Sentiment: {self.translate_sentiment_tag(data['sentiment'])}      
-    
-### Entities:     
-{', '.join([f"{entity['text']} ({entity['label']})" for entity in data['ner']])}    
+###### 情感: {self.translate_sentiment_tag(data['sentiment'])}      
+###### NER:      
+{markdown_ner}      
                 """
             )
 
