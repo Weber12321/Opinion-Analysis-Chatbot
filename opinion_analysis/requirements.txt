@@ -1,0 +1,11 @@
+duckduckgo-search==8.0.0
+langchain-community==0.3.20
+langchain-openai==0.3.0
+langchain==0.3.21
+langgraph==0.3.0
+lxml_html_clean==0.4.2
+newspaper4k[all]==0.9.3.1
+pydantic==2.10.5
+spacy==3.8.5
+streamlit==1.44.1
+tabulate==0.9.0
