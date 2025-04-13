@@ -2,16 +2,16 @@ version: '3.8'
 
 services:
   opinion_analysis:
-    build: ./opinion_analysis
+    image: opinion-analysis:develop
     container_name: opinion-analysis-opinion_analysis
     ports:
-      - "8000:8000"
+      - "8501:8501"
     environment:
-      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     restart: unless-stopped
     volumes:
       - ./opinion_analysis:/app
+    command: streamlit run main.py 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8501/"]
       interval: 30s
