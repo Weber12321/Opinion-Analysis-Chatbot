@@ -3,11 +3,9 @@ import os
 from typing import Dict
 from pydantic import BaseModel, Field
 from langchain_core.prompts import PromptTemplate
-from dotenv import load_dotenv
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# Load environment variables
-load_dotenv()
 
 class SentimentGrader(BaseModel):
     """Grade the sentiment with the given context"""
@@ -141,3 +139,6 @@ class LLMService:
             "formatted_results": formatted_results
         })
         return response.text.strip()
+
+
+llm_service = LLMService()

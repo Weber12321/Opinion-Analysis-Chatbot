@@ -1,5 +1,5 @@
 
-from typing import Dict, List, Any, TypedDict
+from typing import Dict, List, TypedDict
 from langgraph.graph import StateGraph, END
 from app.services.llm_service import llm_service
 from app.services.news_scraper import news_scraper
@@ -109,7 +109,3 @@ class OpinionAnalysisAgent:
         state["response"] = response
         return state
 
-
-def create_opinion_analysis_agent() -> OpinionAnalysisAgent:
-    """Factory function to create an instance of OpinionAnalysisAgent"""
-    return OpinionAnalysisAgent()

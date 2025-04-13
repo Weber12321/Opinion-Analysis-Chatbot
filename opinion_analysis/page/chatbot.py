@@ -1,16 +1,8 @@
 import uuid
 import streamlit as st
-import httpx
-import json
 import os
 from typing import Dict, List, Tuple, Optional
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
-# Configuration
-API_URL = os.getenv("API_URL", "http://opinion_analysis:8000")
 
 # Page configuration
 st.set_page_config(
@@ -35,6 +27,13 @@ st.markdown("""
     - Analyze news coverage on climate change this month
     - How are people reacting to the latest tech product release?
 """)
+
+def process_history_messages(history: List[Dict]) -> str:
+    """Process chat history messages for display"""
+    processed_messages = ""
+    for message in history:
+        processed_messages += f"{message['role'].capitalize()}: {message['content']}\n\n"
+    return processed_messages
 
 # Function to interact with opinion_analysis API
 def chat_with_api(message: str) -> Tuple[str, Optional[str]]:
