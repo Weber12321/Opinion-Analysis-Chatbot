@@ -69,7 +69,7 @@ class OpinionAnalysisWorkflow:
             # Perform sentiment analysis
             sentiment = self.llm_service.sentiment_chain.invoke(
                 {"context": article["content"]}
-            )
+            ).sentiment
 
             analysis_results[article["title"]] = {
                 "title": article["title"],
