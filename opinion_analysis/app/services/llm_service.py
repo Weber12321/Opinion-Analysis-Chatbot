@@ -8,6 +8,11 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 # Load environment variables
 load_dotenv()
 
+class SentimentGrader(BaseModel):
+    """Grade the sentiment with the given context"""
+    sentiment: str = Field(description="sentiment of the comment (positive, neutral or negative")
+
+
 # Pydantic
 class OpinionGrader(BaseModel):
     """Grade if context is related to opinion analysis, public sentiment."""
@@ -30,7 +35,8 @@ class LLMService:
             timeout=60,
         )
         
-        structured_llm = self.gemini.with_structured_output(OpinionGrader)
+        structured_llm_opinion_grader = self.gemini.with_structured_output(OpinionGrader)
+        structured_llm_sentiment_grader = self.gemini.with_structured_output(SentimentGrader)
 
         opinion_related_prompt = f"""
         Determine if the following query is related to opinion analysis, public sentiment, 
@@ -41,7 +47,7 @@ class LLMService:
         Return only true or false.
         """
         opinion_prompt_template = PromptTemplate.from_template(opinion_related_prompt)
-        self.opinion_chain = opinion_prompt_template | structured_llm
+        self.opinion_chain = opinion_prompt_template | structured_llm_opinion_grader
 
         summary_prompt = f"""
         Summarize the following text in 3-5 sentences, focusing on key points:
@@ -61,6 +67,17 @@ class LLMService:
         reject_prompt_template = PromptTemplate.from_template(reject_prompt)
         self.reject_chain = reject_prompt_template | self.gemini
         
+        sentiment_prompt = f"""
+        Analyze the sentiment of the following context.
+
+        context: "{context}"
+
+        Return positive, neutral or negative.
+        Answer in one word.
+        Answer:
+        """
+        sentiment_prompt_template = PromptTemplate.from_template(sentiment_prompt)
+        self.sentiment_chain = sentiment_prompt_template | structured_llm_sentiment_grader
         
     def is_opinion_related(self, query: str) -> bool:
         """Check if the query is related to opinion analysis"""
@@ -74,6 +91,10 @@ class LLMService:
     def generate_rejection_message(self) -> str:
         """Generate a polite rejection message for non-opinion related queries"""
         return self.reject_chain.invoke({})
+
+    def analyze_sentiment(self, context: str) -> str:
+        """Analyze the sentiment of the given context"""
+        return self.sentiment_chain.invoke({"context": context})
 
     def generate_analysis_response(self, query: str, analysis_results: Dict) -> str:
         """Generate a comprehensive response based on the news analysis results"""
