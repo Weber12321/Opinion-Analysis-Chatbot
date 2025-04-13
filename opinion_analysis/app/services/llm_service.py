@@ -1,86 +1,87 @@
-# app/services/llm_service.py
+# app/services/ner_service.py
+import os
+
+from typing import Dict
+
 import os
 from typing import Dict
+from opinion_analysis.app.services.news_scraper import search_news
 from pydantic import BaseModel, Field
 from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 class SentimentGrader(BaseModel):
     """Grade the sentiment with the given context"""
     sentiment: str = Field(description="sentiment of the comment (positive, neutral or negative")
 
-
-# Pydantic
-class OpinionGrader(BaseModel):
-    """Grade if context is related to opinion analysis, public sentiment."""
-    binary_score: str = Field(
-        description="Return binary socre, true, if context is related to opinion analysis, public sentiment, otherwise return false."
-    )
-
     
 class LLMService:
     def __init__(self):
         """Initialize the LLM service with either Gemini"""
-
         # ==== config LLM service ====
-        api_key = os.getenv("GOOGLE_API_KEY")
+        api_key = os.getenv("GOOGLE_API_KEY", "AIzaSyCle6jmFfSjUcUr-D15ieqd-ZOFeKAdOWc")
         if not api_key:
             raise ValueError("GOOGLE_API_KEY not found in environment variables")
 
-        self.gemini = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash-001",
-            timeout=60,
-            google_api_key=api_key
-        )
+        self.llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
         
-        structured_llm_opinion_grader = self.gemini.with_structured_output(OpinionGrader)
-        structured_llm_sentiment_grader = self.gemini.with_structured_output(SentimentGrader)
+        self.opinian_agent = self._create_news_search_agent()
+        self.summary_chain = self._create_summary_chain()
+        self.sentiment_chain = self._create_sentiment_chain()
+        self.analysis_chain = self._create_analysis_chain()
 
-        opinion_related_prompt = f"""
-        Determine if the following query is related to opinion analysis, public sentiment, 
-        market research, social media analysis, or news analysis. 
-        
-        Query: "{query}"
-        
-        Return only true or false.
-        """
-        opinion_prompt_template = PromptTemplate.from_template(opinion_related_prompt)
-        self.opinion_chain = opinion_prompt_template | structured_llm_opinion_grader
-
-        summary_prompt = f"""
+    
+    def _create_summary_chain(self):
+        summary_prompt = """
         Summarize the following text in 3-5 sentences, focusing on key points:
         
         {text}
         """
         summary_prompt_template =  PromptTemplate.from_template(summary_prompt)
-        self.summary_chain = summary_prompt_template | self.gemini
+        return summary_prompt_template | self.llm | StrOutputParser()
 
-
-        reject_prompt = """
-        Generate a polite message explaining that you are a specialized chatbot focused 
-        on opinion analysis and can only answer questions related to public sentiment, 
-        market research, social media trends, news analysis, and similar topics.
-        """
-
-        reject_prompt_template = PromptTemplate.from_template(reject_prompt)
-        self.reject_chain = reject_prompt_template | self.gemini
-        
-        sentiment_prompt = f"""
+    def _create_sentiment_chain(self):
+        structured_llm_sentiment_grader = self.llm.with_structured_output(SentimentGrader)      
+        sentiment_prompt = """
         Analyze the sentiment of the following context.
 
-        context: "{context}"
+        context: {context}
 
         Return positive, neutral or negative.
         Answer in one word.
         Answer:
         """
         sentiment_prompt_template = PromptTemplate.from_template(sentiment_prompt)
-        self.sentiment_chain = sentiment_prompt_template | structured_llm_sentiment_grader
+        return sentiment_prompt_template | structured_llm_sentiment_grader
 
+    def _create_news_search_agent(self) -> AgentExecutor:
+        tools = [search_news] # List of actual tool objects
 
-        analysis_prompt = f"""
+        # Create a prompt suitable for an agent with tool calling instructions
+        agent_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    "If the following query is related to news, opinion analysis, public sentiment, market research, social media analysis, or news analysis. then search it with tool Otherwise answer with: Please enter a query which is related to opinion analysis, public sentiment, market research, social media analysis, or news analysis.",
+                ),
+                ("human", "{query}"),
+                MessagesPlaceholder(variable_name="agent_scratchpad"),
+            ]
+        )
+        
+        # Create the agent runnable
+        agent = create_openai_tools_agent(self.llm, tools, agent_prompt)
+        
+        # Create the executor which handles the tool call loop
+        return AgentExecutor(agent=agent, tools=tools, verbose=True) # verbose=True shows the steps
+        
+    def _create_analysis_chain(self):
+        analysis_prompt = """
         Based on the following query and news analysis results, provide a comprehensive answer.
         Focus on trends, common sentiments, important entities, and insights from the news.
         
@@ -97,24 +98,7 @@ class LLMService:
         5. Conclusion
         """
         analysis_prompt_template = PromptTemplate.from_template(analysis_prompt)
-        self.analysis_chain = analysis_prompt_template | self.gemini
-        
-    def is_opinion_related(self, query: str) -> bool:
-        """Check if the query is related to opinion analysis"""
-        return self.opinion_chain.invoke({"query": query})
-
-
-    def generate_summary(self, text: str) -> str:
-        """Generate a concise summary of the text"""
-        return self.summary_chain.invoke({"text": text})
-
-    def generate_rejection_message(self) -> str:
-        """Generate a polite rejection message for non-opinion related queries"""
-        return self.reject_chain.invoke({})
-
-    def analyze_sentiment(self, context: str) -> str:
-        """Analyze the sentiment of the given context"""
-        return self.sentiment_chain.invoke({"context": context})
+        return analysis_prompt_template | self.llm | StrOutputParser()
 
     def generate_analysis_response(self, query: str, analysis_results: Dict) -> str:
         """Generate a comprehensive response based on the news analysis results"""
@@ -138,7 +122,4 @@ class LLMService:
             "query": query,
             "formatted_results": formatted_results
         })
-        return response.text.strip()
-
-
-llm_service = LLMService()
+        return response.strip()
