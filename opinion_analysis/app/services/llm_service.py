@@ -1,5 +1,6 @@
 # app/services/llm_service.py
 import os
+from typing import Dict
 from pydantic import BaseModel, Field
 from langchain_core.prompts import PromptTemplate
 from dotenv import load_dotenv
@@ -78,6 +79,26 @@ class LLMService:
         """
         sentiment_prompt_template = PromptTemplate.from_template(sentiment_prompt)
         self.sentiment_chain = sentiment_prompt_template | structured_llm_sentiment_grader
+
+
+        analysis_prompt = f"""
+        Based on the following query and news analysis results, provide a comprehensive answer.
+        Focus on trends, common sentiments, important entities, and insights from the news.
+        
+        Query: {query}
+        
+        Analysis Results:
+        {formatted_results}
+        
+        Format your response with clear sections:
+        1. Overview of findings
+        2. Key sentiment trends
+        3. Important entities mentioned
+        4. Detailed insights
+        5. Conclusion
+        """
+        analysis_prompt_template = PromptTemplate.from_template(analysis_prompt)
+        self.analysis_chain = analysis_prompt_template | self.gemini
         
     def is_opinion_related(self, query: str) -> bool:
         """Check if the query is related to opinion analysis"""
@@ -101,7 +122,7 @@ class LLMService:
         # Convert analysis results to a format suitable for the prompt
         results_summary = []
         
-        for url, data in analysis_results.items():
+        for data in analysis_results.values():
             results_summary.append(f"""
             Title: {data['title']}
             Published: {data['publish_date']}
@@ -112,23 +133,10 @@ class LLMService:
         
         formatted_results = "\n".join(results_summary)
         
-        prompt = f"""
-        Based on the following query and news analysis results, provide a comprehensive answer.
-        Focus on trends, common sentiments, important entities, and insights from the news.
+        self.analysis_chain
         
-        Query: {query}
-        
-        Analysis Results:
-        {formatted_results}
-        
-        Format your response with clear sections:
-        1. Overview of findings
-        2. Key sentiment trends
-        3. Important entities mentioned
-        4. Detailed insights
-        5. Conclusion
-        """
-        
-
-        response = self.gemini.generate_content(prompt)
+        response = self.analysis_chain.invoke({
+            "query": query,
+            "formatted_results": formatted_results
+        })
         return response.text.strip()

@@ -5,6 +5,7 @@ from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
 from langchain_community.tools import DuckDuckGoSearchResults
 
 
+
 class NewsScraperService:
     def __init__(self, region: str = "tw-tzh", max_results: int = 10):
         """Initialize the news scraper service"""

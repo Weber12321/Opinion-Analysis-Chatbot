@@ -55,12 +55,12 @@ class OpinionAnalysisAgent:
                 ner_results = self.ner_service.extract_entities(article["content"])
                 
                 # Perform sentiment analysis
-                sentiment = self.sentiment_service.analyze_sentiment(article["content"])
+                sentiment = self.llm_service.analyze_sentiment(article["content"])
                 
                 # Create summary using LLM
                 summary = self.llm_service.generate_summary(article["content"])
                 
-                analysis_results[article["url"]] = {
+                analysis_results[article["title"]] = {
                     "title": article["title"],
                     "publish_date": article["publish_date"],
                     "content": article["content"],
