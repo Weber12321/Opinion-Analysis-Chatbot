@@ -1,4 +1,5 @@
 # app/services/news_scraper.py
+import os
 from typing import List, Dict
 from app.services.ner_service import ner_extractor
 import newspaper
@@ -34,7 +35,8 @@ def search_news(query: str) -> List[Dict]:
     Returns:
         List of news articles with title, url, publish_date, and content
     """
-    wrapper = DuckDuckGoSearchAPIWrapper(region="tw-tzh", time="d", max_results=15)
+    region = os.getenv("REGION", "tw-tzh")
+    wrapper = DuckDuckGoSearchAPIWrapper(region=region, time="d", max_results=15)
     search = DuckDuckGoSearchResults(
         api_wrapper=wrapper, source="news", output_format="list"
     )
