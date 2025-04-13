@@ -1,171 +1,109 @@
 # Opinion Analysis Chatbot
 
-A specialized chatbot that answers questions related to opinion analysis by scraping and analyzing web news articles. The system provides comprehensive analysis including sentiment analysis, named entity recognition, and summaries.
+## 1. Introduction
 
-## Features
+Opinion Analysis Chatbot is a specialized AI-powered assistant designed to analyze public opinion, sentiment trends, and news coverage. The system combines natural language processing with web scraping capabilities to provide comprehensive analyses of online discourse and news content.
 
-- **Focused on Opinion Analysis**: Only responds to queries related to public sentiment, market research, and news analysis
-- **Web News Analysis**: Scrapes and analyzes 1-10 relevant news articles based on user queries
-- **Comprehensive Analysis**: Provides article titles, publication dates, content, summaries, sentiment analysis, and named entity recognition
-- **Dockerized Architecture**: opinion_analysis (FastAPI + LangGraph) and Frontend (Streamlit) as separate containers
+This chatbot is particularly useful for:
 
-## Project Structure
+- Market researchers analyzing public sentiment
+- PR professionals tracking brand reception
+- Journalists researching public opinion on specific topics
+- Analysts monitoring opinion trends over time
 
-```
-Opinion-Analysis-Chatbot/
-├── opinion_analysis/                  # FastAPI opinion_analysis service
-│   ├── Dockerfile
-│   ├── main.py               # FastAPI entry point
-│   ├── requirements.txt
-│   └── app/
-│       ├── agents/
-│       │   └── opinion_analysis_agent.py  # LangGraph agent
-│       └── services/
-│           ├── llm_service.py            # Gemini/OpenAI integration
-│           ├── news_scraper.py           # Web news scraper
-│           ├── ner_service.py            # Named Entity Recognition
-│           └── sentiment_analysis.py     # Sentiment analysis
-├── frontend/                 # Streamlit frontend
-│   ├── Dockerfile
-│   ├── app.py                # Streamlit application
-│   └── requirements.txt
-├── docker-compose.yml        # Docker Compose configuration
-└── README.md                 # This file
-```
+The system features a modular architecture with a Streamlit frontend and a workflow-based backend utilizing LangGraph for orchestration and LLM integration.
 
-## Requirements
+## 2. Requirements
+
+### Software Requirements
 
 - Docker and Docker Compose
-- OpenAI API Key or Google Gemini API Key
 
-## Setup Instructions
+### API Keys
 
-1. **Clone the repository**
+- OpenAI API key (for GPT model access) see [Open API keys](https://platform.openai.com/api-keys)
+
+### Python Dependencies
+
+Key dependencies include:
+
+- langchain==0.1.0
+- langgraph==0.0.17
+- langchain-openai==0.3.12
+- langchain-community>=0.0.10
+- langchain-core>=0.1.10
+- newspaper3k>=0.2.8
+- spacy>=3.7.0
+- streamlit>=1.24.0
+- pydantic==2.3.0
+
+For a complete list of dependencies, see `opinion_analysis/requirements.txt`.
+
+## 3. Setup
+
+### Using Docker (Recommended)
+
+1. Clone the repository:
 
 ```bash
 git clone https://github.com/yourusername/Opinion-Analysis-Chatbot.git
 cd Opinion-Analysis-Chatbot
 ```
 
-2. **Configure environment variables**
+2. Copy the `.env.example` to `.env` file in the project root with pasting your OpenAI API key:
 
-Create a `.env` file in the project root directory:
+```
+OPENAI_API_KEY=your_api_key_here
+```
+
+3. Noted that you can restrict the workflow to search only a local region news, see [information](https://duckduckgo.com/duckduckgo-help-pages/settings/params/) for getting the region code and paste it to the `.env`
+
+```
+# For Taiwan
+REGION=tw-tzh
+```
+
+4. Build and run the containers:
 
 ```bash
-# .env
-# Choose one: "openai" or "gemini"
-LLM_PROVIDER=openai  
-
-# Only one of these is needed, based on your LLM_PROVIDER choice
-OPENAI_API_KEY=your-api-key-here
-GEMINI_API_KEY=your-api-key-here
+docker build -f opinion_analysis/Dockerfile -t opinion-analysis:develop .
+docker-compose up
 ```
 
-3. **Build and start the services**
+4. Access the application:
+   - Chat Interface: [http://localhost:8501](http://localhost:8501)
 
-```bash
-docker compose up
-```
+## 4. Test with Chat Web
 
-The first build may take several minutes as it installs all dependencies.
+Once the application is running, you can interact with the Opinion Analysis Chatbot through the Streamlit web interface:
 
-4. **Access the application**
+1. Navigate to [http://localhost:8501](http://localhost:8501) in your web browser
+2. Enter your query in the chat input field at the bottom of the page
+3. The chatbot will process your query, search for relevant news articles, and provide an analysis
 
-Frontend: [http://localhost:8501](http://localhost:8501)
-opinion_analysis API: [http://localhost:8000](http://localhost:8000)
+### Example Queries
 
-## API Documentation
+Try asking questions like:
 
-### Base URL
+- "請協助我搜集去年總統大選的新聞。"
+- "替我分析 2025 立法委員大罷免的新聞。 "
 
-```
-http://localhost:8000
-```
+### Features
 
-### Endpoints
+- **Contextual Memory**: The chatbot maintains conversation history using LangGraph's thread system
+- **Real-time Web Search**: Searches current news sources for relevant articles
+- **Sentiment Analysis**: Analyzes the emotional tone of news articles
+- **Named Entity Recognition**: Identifies key people, organizations, and concepts
+- **Summary Generation**: Creates concise summaries of complex articles
 
-#### Health Check
+## 5. Contact
 
-```
-GET /
-```
+For questions, issues, or contributions please contact:
 
-Returns a message indicating the API is running.
+Weber Huang
+Email: doudi853@gmail.com
+GitHub: Weber12321
 
-**Response**:
-```json
-{
-  "message": "Opinion Analysis Chatbot API is running"
-}
-```
+---
 
-#### Process Chat Message
-
-```
-POST /chat
-```
-
-Processes a user message and returns a response based on opinion analysis of web news.
-
-**Request Body**:
-```json
-{
-  "message": "What is the public sentiment about AI adoption?",
-  "conversation_id": "optional-conversation-id"
-}
-```
-
-**Response**:
-```json
-{
-  "response": "Based on analysis of recent news articles...",
-  "conversation_id": "conversation-id"
-}
-```
-
-### Response Format
-
-For opinion-related queries, responses include:
-- Overview of findings
-- Key sentiment trends
-- Important entities mentioned
-- Detailed insights
-- Conclusion
-
-## Implementation Details
-
-### opinion_analysis
-
-- **FastAPI**: Web framework for the API
-- **LangGraph**: Workflow orchestration for the agent
-- **OpenAI/Gemini**: LLM providers for text processing
-- **newspaper3k**: News article scraping
-- **spaCy**: Named entity recognition
-- **Transformers**: Sentiment analysis
-
-### Frontend
-
-- **Streamlit**: User interface for interacting with the chatbot
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Container fails to start**:
-   - Check if ports 8000 and 8501 are already in use
-   - Verify your API keys are correctly set in the .env file
-
-2. **News scraping fails**:
-   - Some websites block web scraping; try different queries
-
-3. **"Not opinion-related" responses**:
-   - The chatbot is designed to only respond to opinion analysis questions
-   - Try rephrasing your query to focus on public opinion aspects
-
-## License
-
-[Include your license information here]
-
-## Contact
-
-[Your contact information]
+**Note**: This project is designed for educational and research purposes. The accuracy of sentiment analysis and opinion extraction depends on the quality of sources available and the capabilities of the underlying language models.
