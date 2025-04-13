@@ -108,13 +108,6 @@ class LLMService:
         5. Conclusion
         """
         
-        if self.provider == "gemini":
-            response = self.gemini.generate_content(prompt)
-            return response.text.strip()
-        else:  # OpenAI
-            response = self.openai.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=800
-            )
-            return response.choices[0].message.content.strip()
+
+        response = self.gemini.generate_content(prompt)
+        return response.text.strip()
