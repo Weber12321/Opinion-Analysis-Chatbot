@@ -1,7 +1,5 @@
-import time
-import uuid
 import streamlit as st
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from langchain_core.messages import HumanMessage, AIMessage
 from app.agents.opinion_analysis_workflow import (
     OpinionAnalysisWorkflow,
@@ -34,9 +32,10 @@ if "messages" not in st.session_state:
 st.title("Opinion Analysis Chatbot")
 st.markdown(
     """
-    This chatbot answers questions related to news with opinion analysis, public sentiment, 
-    and semantic like name entity, sentiment analysis. Ask questions like:
-    - Can you search a news about AI adoption?
+    歡迎來到意見分析聊天機器人！這個聊天機器人專注於分析網絡新聞中的公眾情緒和意見趨勢。您可以詢問有關以下主題的問題：
+    - 請協助我搜集 2025 台灣大罷免新聞，並分析內容?
+
+    * 請注意，若無關上述的回應機器人將不會進一步回答。
 """
 )
 
@@ -115,24 +114,22 @@ with st.sidebar:
     st.header("About")
     st.info(
         """
-        This chatbot specializes in opinion analysis based on web news.
-        It can help you understand public sentiment, track trending topics,
-        and analyze how opinions evolve over time.
+這個聊天機器人專門根據網路新聞進行觀點分析。
+它可以幫助你了解公眾情緒，追蹤熱門話題。
     """
     )
 
     st.header("Features")
     st.markdown(
         """
-        - 📰 Real-time news analysis
-        - 🔍 Named Entity Recognition
-        - 😊 Sentiment analysis
-        - 📊 Opinion trends
+        - 📰 即時新聞分析
+        - 🔍 命名實體識別
+        - 😊 情緒分析
     """
     )
 
     # Clear chat button
-    if st.button("Clear Conversation"):
+    if st.button("清楚對話"):
         st.session_state.messages = []
         st.session_state.thread_id = None
         st.rerun()

@@ -61,7 +61,8 @@ class LLMService:
             [
                 (
                     "system",
-                    "If the following query is related to news, opinion analysis, public sentiment, market research, social media analysis, or news analysis. then search it with tool Otherwise answer with: Please enter a query which is related to opinion analysis, public sentiment, market research, social media analysis, or news analysis.",
+                    "If the following query is related to news, opinion analysis, public sentiment, market research, social media analysis, or news analysis. then search it with tool. "
+                    "Otherwise answer with: 請參考上述說明輸入與觀點分析、公眾情緒、市場研究、社群媒體分析相關的新聞查詢，謝謝您！",
                 ),
                 ("human", "{query}"),
                 MessagesPlaceholder(variable_name="agent_scratchpad"),
