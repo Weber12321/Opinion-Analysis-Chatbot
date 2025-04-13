@@ -37,3 +37,5 @@ class NERService:
             })
             
         return entities
+
+ner_service = NERService()

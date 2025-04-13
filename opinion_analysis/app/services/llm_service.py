@@ -34,6 +34,7 @@ class LLMService:
         self.gemini = ChatGoogleGenerativeAI(
             model="gemini-2.0-flash-001",
             timeout=60,
+            google_api_key=api_key
         )
         
         structured_llm_opinion_grader = self.gemini.with_structured_output(OpinionGrader)
