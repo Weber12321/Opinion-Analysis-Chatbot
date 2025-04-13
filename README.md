@@ -7,13 +7,13 @@ A specialized chatbot that answers questions related to opinion analysis by scra
 - **Focused on Opinion Analysis**: Only responds to queries related to public sentiment, market research, and news analysis
 - **Web News Analysis**: Scrapes and analyzes 1-10 relevant news articles based on user queries
 - **Comprehensive Analysis**: Provides article titles, publication dates, content, summaries, sentiment analysis, and named entity recognition
-- **Dockerized Architecture**: Backend (FastAPI + LangGraph) and Frontend (Streamlit) as separate containers
+- **Dockerized Architecture**: opinion_analysis (FastAPI + LangGraph) and Frontend (Streamlit) as separate containers
 
 ## Project Structure
 
 ```
 Opinion-Analysis-Chatbot/
-├── backend/                  # FastAPI backend service
+├── opinion_analysis/                  # FastAPI opinion_analysis service
 │   ├── Dockerfile
 │   ├── main.py               # FastAPI entry point
 │   ├── requirements.txt
@@ -72,7 +72,7 @@ The first build may take several minutes as it installs all dependencies.
 4. **Access the application**
 
 Frontend: [http://localhost:8501](http://localhost:8501)
-Backend API: [http://localhost:8000](http://localhost:8000)
+opinion_analysis API: [http://localhost:8000](http://localhost:8000)
 
 ## API Documentation
 
@@ -134,7 +134,7 @@ For opinion-related queries, responses include:
 
 ## Implementation Details
 
-### Backend
+### opinion_analysis
 
 - **FastAPI**: Web framework for the API
 - **LangGraph**: Workflow orchestration for the agent

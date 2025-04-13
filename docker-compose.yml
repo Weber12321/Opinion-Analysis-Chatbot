@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  backend:
-    image: opinion-analysis-backend:develop
-    container_name: opinion-analysis-backend
+  opinion_analysis:
+    build: ./opinion_analysis
+    container_name: opinion-analysis-opinion_analysis
     ports:
       - "8000:8000"
     environment:
@@ -12,27 +12,10 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     restart: unless-stopped
     volumes:
-      - ./backend:/app
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
-  frontend:
-    image: opinion-analysis-frontend:develop
-    container_name: opinion-analysis-frontend
-    ports:
-      - "8501:8501"
-    environment:
-      - API_URL=http://backend:8000
-    depends_on:
-      - backend
-    restart: unless-stopped
-    volumes:
-      - ./frontend:/app
+      - ./opinion_analysis:/app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8501/"]
       interval: 30s
       timeout: 10s
       retries: 5
+

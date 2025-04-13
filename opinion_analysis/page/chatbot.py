@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-API_URL = os.getenv("API_URL", "http://backend:8000")
+API_URL = os.getenv("API_URL", "http://opinion_analysis:8000")
 
 # Page configuration
 st.set_page_config(
@@ -36,9 +36,9 @@ st.markdown("""
     - How are people reacting to the latest tech product release?
 """)
 
-# Function to interact with backend API
+# Function to interact with opinion_analysis API
 def chat_with_api(message: str) -> Tuple[str, Optional[str]]:
-    """Send message to backend API and get response"""
+    """Send message to opinion_analysis API and get response"""
     try:
         payload = {
             "message": message,
@@ -54,7 +54,7 @@ def chat_with_api(message: str) -> Tuple[str, Optional[str]]:
         else:
             return f"Error: {response.status_code} - {response.text}", None
     except Exception as e:
-        return f"Error communicating with backend: {str(e)}", None
+        return f"Error communicating with opinion_analysis: {str(e)}", None
 
 # Function to format entity display
 def format_entity(entity_data: Dict) -> str:
