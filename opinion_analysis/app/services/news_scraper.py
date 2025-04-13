@@ -1,10 +1,10 @@
 # app/services/news_scraper.py
-import os
 from typing import List, Dict
 from backend.app.services import ner_service
 import newspaper
 from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
 from langchain_community.tools import DuckDuckGoSearchResults
+from langchain_core.tools import tool
 
 
 def extract_ner(extractor, text):
@@ -21,7 +21,7 @@ def extract_ner(extractor, text):
     return entities
 
 
-@tool("search_news", return_direct=True )
+@tool("search_news", return_direct=True)
 def search_news(query: str) -> List[Dict]:
     
     """
