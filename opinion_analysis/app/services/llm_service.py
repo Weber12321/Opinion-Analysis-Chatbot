@@ -1,10 +1,7 @@
 # app/services/ner_service.py
 import os
-
 from typing import Dict
 
-import os
-from typing import Dict
 from opinion_analysis.app.services.news_scraper import search_news
 from pydantic import BaseModel, Field
 from langchain_core.prompts import PromptTemplate
@@ -14,7 +11,6 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 
-
 class SentimentGrader(BaseModel):
     """Grade the sentiment with the given context"""
     sentiment: str = Field(description="sentiment of the comment (positive, neutral or negative")
@@ -22,14 +18,8 @@ class SentimentGrader(BaseModel):
     
 class LLMService:
     def __init__(self):
-        """Initialize the LLM service with either Gemini"""
-        # ==== config LLM service ====
-        api_key = os.getenv("GOOGLE_API_KEY", "AIzaSyCle6jmFfSjUcUr-D15ieqd-ZOFeKAdOWc")
-        if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in environment variables")
-
+        """Initialize the LLM service with Open AI"""
         self.llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
-        
         self.opinian_agent = self._create_news_search_agent()
         self.summary_chain = self._create_summary_chain()
         self.sentiment_chain = self._create_sentiment_chain()
