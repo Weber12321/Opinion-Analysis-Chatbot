@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  opinion_analysiopinion_analysiss:
+    image: opinion-analysis:develop
+    container_name: opinion-analysis-opinion_analysis
+    ports:
+      - "8501:8501"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REGION=${REGION}
+      - DOCUMENTS_PATH=${DOCUMENTS_PATH}
+      - VECTORSTORE_PATH=${VECTORSTORE_PATH}
+    restart: unless-stopped
+    volumes:
+      - ./opinion_analysis:/app
+    command: streamlit run main.py 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
