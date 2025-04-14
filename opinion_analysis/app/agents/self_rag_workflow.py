@@ -1,8 +1,7 @@
 from io import BytesIO
-from typing import Dict, List, Any, Tuple, Optional, TypedDict, Annotated
+from typing import operator, List, Sequence, Optional, TypedDict, Annotated
 
-from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
-from langchain_community.vectorstores import FAISS
+from langchain_core.messages import BaseMessage, AIMessage
 
 
 from app.services.llm_service import RAGLLMService
@@ -13,11 +12,13 @@ class SelfRAGWorkflow:
     class SelfRAGState(TypedDict):
         """State for the Self-RAG workflow"""
 
-        messages: List[Any]  # List of chat messages
+        messages: Annotated[
+            Sequence[BaseMessage], operator.add
+        ]  # List of chat messages
         docs: List[str] | str  # Retrieved documents
         is_retrieval_related: bool  # Whether the query is related to retrieval
         validated_docs: List[str]  # Documents that passed validation
-        response: str  # Generated response
+        response: str = ""  # Generated response
         response_validated: Optional[bool] = None  # Whether response passed validation
         max_generation: int = 2  # Maximum number of retries
         query_rewritten: bool = False  # Whether query was rewritten
@@ -44,7 +45,6 @@ class SelfRAGWorkflow:
         workflow.add_node("generate_response", self.generate_response)
         workflow.add_node("validate_response", self.validate_response)
         workflow.add_node("query_rewrite", self.query_rewrite)
-        workflow.add_node("generate_final_response", self.generate_final_response)
 
         # Define conditional edges
 
@@ -55,22 +55,6 @@ class SelfRAGWorkflow:
         workflow.add_conditional_edges("validate_response", self.check_max_generation)
 
         workflow.add_edge("generate_response", "validate_response")
-
-        # From validate_response, go to query_rewrite if validation fails, otherwise to final response
-        workflow.add_conditional_edges(
-            "validate_response",
-            lambda state: (
-                "query_rewrite"
-                if not state["response_validated"]
-                else "generate_final_response"
-            ),
-        )
-
-        # From query_rewrite to generate_final_response
-        workflow.add_edge("query_rewrite", "generate_final_response")
-
-        # Final response leads to END
-        workflow.add_edge("generate_final_response", END)
 
         # Set entry point
         workflow.set_entry_point("retrieve_or_respond")
@@ -96,7 +80,7 @@ class SelfRAGWorkflow:
         if state["is_retrieval_related"]:
             return "validate_docs"
         else:
-            return "generate_final_response"
+            return END
 
     def validate_docs(self, state):
         """Validate the retrieved documents is related to the query, keep the related documents and remove the unrelated documents"""
@@ -171,10 +155,13 @@ class SelfRAGWorkflow:
         return state
 
     def check_max_generation(self, state):
-        if state["max_generation"] == 2:
-            return "query_rewrite"
+        if state["response_validated"]:
+            return END
         else:
-            return "generate_response"
+            if state["max_generation"] >= 2:
+                return "query_rewrite"
+            else:
+                return "generate_response"
 
     def query_rewrite(self, state: SelfRAGState):
         """Rewrite the query if it failed in the previous stage"""
@@ -188,7 +175,7 @@ class SelfRAGWorkflow:
         )
         # Update state
         state["query_rewritten"] = True
-        state["rewritten_query"] = rewritten_query
+        state["rewritten_query"] = new_query
 
         return state
 
