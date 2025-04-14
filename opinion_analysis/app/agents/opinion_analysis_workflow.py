@@ -1,7 +1,7 @@
 from typing import Dict, List, TypedDict, Annotated, Sequence, operator
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import AIMessage, BaseMessage
-from app.services.llm_service import LLMService
+from app.services.llm_service import OpinionLLMService
 
 
 class OpinionAnalysisWorkflow:
@@ -13,7 +13,7 @@ class OpinionAnalysisWorkflow:
 
     def __init__(self):
         """Initialize the Opinion Analysis Agent with necessary services"""
-        self.llm_service = LLMService()
+        self.llm_service = OpinionLLMService()
         self.workflow = self._build_workflow()
 
     def _build_workflow(self) -> StateGraph:
