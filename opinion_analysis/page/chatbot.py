@@ -108,7 +108,7 @@ if prompt := st.chat_input("Ask about opinion analysis..."):
         st.session_state.thread_id = thread_id
 
     # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response})
+    st.session_state.messages.append({"role": "assistant", "content": response_text})
 
 # Sidebar with information
 with st.sidebar:
