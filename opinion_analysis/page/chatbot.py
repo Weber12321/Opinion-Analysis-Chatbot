@@ -15,7 +15,6 @@ st.set_page_config(
 
 
 # Initialize the workflow
-@st.cache_resource
 def get_workflow():
     return OpinionAnalysisWorkflow()
 
@@ -123,9 +122,9 @@ with st.sidebar:
     st.header("Features")
     st.markdown(
         """
-        📰 即時新聞分析
-        🔍 命名實體識別
-        😊 情緒分析
+        📰 即時新聞分析   
+        🔍 命名實體識別   
+        😊 情緒分析   
     """
     )
 

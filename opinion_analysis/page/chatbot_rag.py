@@ -14,8 +14,6 @@ st.set_page_config(
 )
 
 
-# Initialize the workflow
-@st.cache_resource
 def get_workflow():
     return SelfRAGWorkflow()
 
@@ -26,8 +24,8 @@ workflow = get_workflow()
 if "thread_id" not in st.session_state:
     st.session_state.thread_id = None
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if "rag_messages" not in st.session_state:
+    st.session_state.rag_messages = []
 
 # Application header
 st.title("RAG Chatbot")
@@ -55,14 +53,14 @@ def convert_to_langchain_messages(messages: List[Dict]) -> List:
 
 
 # Display chat messages
-for message in st.session_state.messages:
+for message in st.session_state.rag_messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # Chat input
 if prompt := st.chat_input("Ask about opinion analysis..."):
     # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    st.session_state.rag_messages.append({"role": "user", "content": prompt})
 
     # Display user message
     with st.chat_message("user"):
@@ -71,7 +69,7 @@ if prompt := st.chat_input("Ask about opinion analysis..."):
     # Process message through workflow
     with st.chat_message("assistant"):
         # Convert stored messages to langchain format
-        lc_messages = convert_to_langchain_messages(st.session_state.messages)
+        lc_messages = convert_to_langchain_messages(st.session_state.rag_messages)
 
         # Create thread_id if not exists
         thread_id = st.session_state.thread_id
@@ -115,7 +113,9 @@ if prompt := st.chat_input("Ask about opinion analysis..."):
         st.session_state.thread_id = thread_id
 
     # Add assistant response to chat history
-    st.session_state.messages.append({"role": "assistant", "content": response_text})
+    st.session_state.rag_messages.append(
+        {"role": "assistant", "content": response_text}
+    )
 
 # Sidebar with information
 with st.sidebar:
@@ -136,6 +136,6 @@ with st.sidebar:
 
     # Clear chat button
     if st.button("清除對話"):
-        st.session_state.messages = []
+        st.session_state.rag_messages = []
         st.session_state.thread_id = None
         st.rerun()
