@@ -83,7 +83,16 @@ if prompt := st.chat_input("Ask about opinion analysis..."):
         initial_state = {
             "messages": lc_messages,
             "max_generation": 2,
+            "docs": [],
+            "is_retrieval_related": False,
+            "validated_docs": [],
+            "response": "",
+            "response_validated": None,
+            "max_generation": 2,
+            "query_rewritten": False,
+            "rewritten_query": "",
         }
+
         # Process through workflow and get response
         with st.spinner("Processing your query..."):
             # Create progress bars for each step
