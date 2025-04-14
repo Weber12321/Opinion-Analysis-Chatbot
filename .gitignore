@@ -181,3 +181,5 @@ opinion_analysis/fixtures/*.md
 # vectorstore files
 *.faiss
 *.pkl
+
+*.DS_Store

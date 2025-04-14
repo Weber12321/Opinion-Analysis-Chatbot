@@ -70,11 +70,10 @@ DOCUMENTS_PATH=fixtures
 VECTORSTORE_PATH=fixtures/vector_db
 ```
 
-5. Build and run the containers:
+5. Build the docker image:
 
 ```bash
 docker build -f opinion_analysis/Dockerfile -t opinion-analysis:develop .
-docker-compose up
 ```
 
 6. Please follow the fixtures [README.md](opinion_analysis/fixtures/README.md) of the information for placing the `.md` file under the `opinion_analysis/fixtures` which you want to store and search with vectorstore.
@@ -87,7 +86,14 @@ fixtures
 └── ...
 ```
 
-7. Access the application:
+7. Run the server and build up vectorstore
+
+```bash
+docker-compose up &
+docker-compose exec server python scripts/build_vectorstore.py
+```
+
+8. Access the application:
    - Opinion Analysis Chatbot: [http://localhost:8501](http://localhost:8501)
    - RAG Chatbot: [http://localhost:8501/chatbot_rag](http://localhost:8501/chatbot_rag)
 
