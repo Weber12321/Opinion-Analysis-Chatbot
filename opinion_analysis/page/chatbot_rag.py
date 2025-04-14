@@ -73,9 +73,6 @@ if prompt := st.chat_input("Ask about opinion analysis..."):
         # Convert stored messages to langchain format
         lc_messages = convert_to_langchain_messages(st.session_state.messages)
 
-        # Add the new user message
-        lc_messages.append(HumanMessage(content=prompt))
-
         # Create thread_id if not exists
         thread_id = st.session_state.thread_id
         if not thread_id:
@@ -83,7 +80,10 @@ if prompt := st.chat_input("Ask about opinion analysis..."):
             st.session_state.thread_id = thread_id
 
         # Prepare initial state for the workflow
-        initial_state = {"messages": lc_messages, "max_generation": 2}
+        initial_state = {
+            "messages": lc_messages,
+            "max_generation": 2,
+        }
         # Process through workflow and get response
         with st.spinner("Processing your query..."):
             # Create progress bars for each step
@@ -97,6 +97,7 @@ if prompt := st.chat_input("Ask about opinion analysis..."):
                 initial_state,
                 config={"configurable": {"thread_id": st.session_state.thread_id}},
             )
+
             response_text = response["messages"][-1].content
             search_progress.text("✅ Search completed")
             st.markdown(response_text)

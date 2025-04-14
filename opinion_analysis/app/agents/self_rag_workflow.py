@@ -45,6 +45,7 @@ class SelfRAGWorkflow:
         workflow.add_node("generate_response", self.generate_response)
         workflow.add_node("validate_response", self.validate_response)
         workflow.add_node("query_rewrite", self.query_rewrite)
+        workflow.add_node("final_response", self.final_response)
 
         # Define conditional edges
 
@@ -55,7 +56,7 @@ class SelfRAGWorkflow:
         workflow.add_conditional_edges("validate_response", self.check_max_generation)
 
         workflow.add_edge("generate_response", "validate_response")
-
+        workflow.add_edge("final_response", END)
         # Set entry point
         workflow.set_entry_point("retrieve_or_respond")
 
@@ -80,8 +81,7 @@ class SelfRAGWorkflow:
         if state["is_retrieval_related"]:
             return "validate_docs"
         else:
-            state["messages"] = [AIMessage(content=state["docs"])]
-            return END
+            return "final_response"
 
     def validate_docs(self, state):
         """Validate the retrieved documents is related to the query, keep the related documents and remove the unrelated documents"""
@@ -156,8 +156,7 @@ class SelfRAGWorkflow:
 
     def check_max_generation(self, state):
         if state["response_validated"]:
-            state["messages"] = [AIMessage(content=state["response"])]
-            return END
+            return "final_response"
         else:
             if state["max_generation"] >= 2:
                 return "query_rewrite"
@@ -178,4 +177,13 @@ class SelfRAGWorkflow:
         state["query_rewritten"] = True
         state["rewritten_query"] = new_query
 
+        return state
+
+    def final_response(self, state):
+        """Generate the final response based on the rewritten query"""
+        # Generate final response using the rewritten query
+        if state["response"]:
+            state["messages"] = [AIMessage(content=state["response"])]
+        elif state["docs"]:
+            state["messages"] = [AIMessage(content=state["docs"])]
         return state
