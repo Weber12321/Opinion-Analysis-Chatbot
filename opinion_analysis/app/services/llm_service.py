@@ -125,6 +125,7 @@ class RAGLLMService:
         Based on the provided documentation, please give a detailed and accurate response to the query.
         Include specific information from the documentation when relevant.
         If the documentation doesn't fully answer the query, supplement with your general knowledge.
+        Answer:
         """
 
         response_prompt = PromptTemplate.from_template(response_template)
@@ -153,11 +154,7 @@ class RAGLLMService:
         response_validation_prompt_template = PromptTemplate.from_template(
             response_validation_prompt
         )
-        return (
-            response_validation_prompt_template
-            | structured_llm_response_grader
-            | StrOutputParser()
-        )
+        return response_validation_prompt_template | structured_llm_response_grader
 
     def _create_query_rewriter_chain(self):
         """Create a query rewriter for the LLM"""

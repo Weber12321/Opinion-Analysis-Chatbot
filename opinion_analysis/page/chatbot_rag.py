@@ -91,7 +91,7 @@ if prompt := st.chat_input("Ask about opinion analysis..."):
             analysis_progress = st.empty()
 
             # Run first step - searching
-            search_progress.text("Searching for relevant news...")
+            search_progress.text("Searching for RAG...")
 
             response = workflow.workflow.invoke(
                 initial_state,

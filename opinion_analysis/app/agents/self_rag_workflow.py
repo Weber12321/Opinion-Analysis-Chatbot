@@ -1,4 +1,5 @@
 from io import BytesIO
+import logging
 from typing import operator, List, Sequence, Optional, TypedDict, Annotated
 
 from langchain_core.messages import BaseMessage, AIMessage
@@ -138,7 +139,6 @@ class SelfRAGWorkflow:
         """Validate the generated response twice with LLM response and query"""
         query = state["messages"][-1].content
         response = state["response"]
-
         response = self.llm_service.response_validation_chain.invoke(
             {
                 "query": query,
