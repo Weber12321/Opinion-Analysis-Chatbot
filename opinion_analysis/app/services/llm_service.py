@@ -21,11 +21,31 @@ class SentimentGrader(BaseModel):
     )
 
 
+class DocumentGrader(BaseModel):
+    """Grade the relevance of document with the given context"""
+
+    binary_score: str = Field(
+        description="Give a binary score to represent if the given document is related to the given query, true for related and false for not related"
+    )
+
+
+class ResponseGrader(BaseModel):
+    """Grade the relevance of query with the given response from rag"""
+
+    binary_score: str = Field(
+        description="Give a binary score to represent if the given response is related to the given query, true for related and false for not related"
+    )
+
+
 class RAGLLMService:
     def __init__(self):
         """Initialize the LLM service with Open AI"""
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
         self.rag_agent = self._create_retriever_agent()
+        self.document_validation_chain = self._create_validation_chain()
+        self.rag_response_chain = self._create_rag_response_chain()
+        self.response_validation_chain = self._create_response_validation_chain()
+        self.query_rewrite_chain = self._create_query_rewriter_chain()
 
     def _create_retriever_agent(self):
         """Create a retriever for the LLM"""
@@ -70,11 +90,110 @@ class RAGLLMService:
         agent = create_openai_tools_agent(self.llm, tools, agent_prompt)
 
         # Create the executor which handles the tool call loop
-        executor = AgentExecutor(
+        return AgentExecutor(
             agent=agent, tools=tools, verbose=True
         )  # verbose=True shows the steps
 
-        pass
+    def _create_validation_chain(self):
+        """Create a validation chain for the LLM"""
+        structured_llm_document_grader = self.llm.with_structured_output(DocumentGrader)
+        validation_prompt = """
+        You are an AI document validator that determines if a document is semantically relevant to a query.
+        
+        Query: {query}
+        
+        Document: {document}
+        
+        Is this document relevant to the query? Analyze the document's content and the query carefully.
+        Answer with true if relevant or false if not relevant. Then provide a brief explanation of your reasoning.
+        Answer:
+        """
+        validation_prompt_template = PromptTemplate.from_template(validation_prompt)
+        return validation_prompt_template | structured_llm_document_grader
+
+    def _create_rag_response_chain(self):
+        """Create a response generator for the RAG LLM"""
+        # Placeholder for actual response generation logic
+        response_template = """
+        You are an AI assistant helping users with their questions.
+        
+        User Query: {query}
+        
+        Relevant Documentation:
+        {documents}
+        
+        Based on the provided documentation, please give a detailed and accurate response to the query.
+        Include specific information from the documentation when relevant.
+        If the documentation doesn't fully answer the query, supplement with your general knowledge.
+        """
+
+        response_prompt = PromptTemplate.from_template(response_template)
+        return response_prompt | self.llm | StrOutputParser()
+
+    def _create_response_validation_chain(self):
+        """Create a response validation chain for the LLM"""
+        # Placeholder for actual response validation logic
+        structured_llm_response_grader = self.llm.with_structured_output(ResponseGrader)
+        response_validation_prompt = """
+        You are an AI response validator.
+        
+        Query: {query}
+        
+        Generated Response: {response}
+        
+        Does the response adequately answer the query? Consider:
+        1. Does it address all parts of the question?
+        2. Is it accurate based on the information available?
+        3. Is it complete, or are there important aspects missing?
+        
+        Answer with true if the response is adequate, or false if it needs improvement.
+        Answer:
+        """
+
+        response_validation_prompt_template = PromptTemplate.from_template(
+            response_validation_prompt
+        )
+        return (
+            response_validation_prompt_template
+            | self.structured_llm_response_grader
+            | StrOutputParser()
+        )
+
+    def _create_query_rewriter_chain(self):
+        """Create a query rewriter for the LLM"""
+        # Placeholder for actual query rewriting logic
+        rewrite_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """你是一個問題改寫的助理，請參考以下文檔內容，並針對使用者輸入的問題進行改寫。請注意改寫的問題不可以完全偏離原本問題的語意。
+
+        內容：
+        這份文件詳細列出了 KEYPO 平台目前提供的 API 功能。每個大標題代表一支獨立的 API，並解釋其運作邏輯。主要功能涵蓋：
+        監測與通知：
+        警報信：可自訂時間、頻率，針對關鍵字主題發送 Email 警報。
+        AI 分析與報告：
+        GPT 報告：利用大型語言模型自動生成輿情分析報告，包含聲量、關鍵字、概念分析等。
+        資料呈現與視覺化：
+        文章列表：展示相關文章詳細資訊（來源、情緒、互動數等），具備篩選、排序、編修功能。
+        聲量趨勢/資料分佈/傳播趨勢：以圖表視覺化呈現聲量隨時間變化、來源佔比、跨頻道傳播路徑。
+        熱門趨勢分析：
+        熱門關鍵字/HashTag/頻道/排行榜/熱詞網路：分析找出最受關注的關鍵字（結合詞頻與權重）、標籤、頻道（依聲量/情緒分類）、文章（依互動數）及關聯詞彙網絡。
+        意見領袖與社群分析：
+        關鍵領袖/人群發文領袖/人群熱門頻道/文章：識別具影響力的作者 (KOL) 及特定受眾關注的領袖、頻道與文章。
+        網路好感度/社群活躍度/網路互動力：分析整體情緒走向、社群討論熱度及互動數變化。
+        進階功能與工具：
+        啟用多維度/關鍵字風暴/探索概念：進行更深層次的關鍵字關聯比較、找出顯著詞彙、探索語意概念群。
+        競品比較：跨主題比較聲量、好感度、社群活躍度等多項指標。
+        報告下載：一鍵生成包含多種分析面向的綜合報告。
+        篩選/排除：提供強大的資料篩選（聚焦）與排除特定頻道、文章的功能。
+        總體來說，這些 API 提供了從基礎監測、資料整理、趨勢分析到深度洞察、報告產出等全方位的網路輿情數據服務。
+                """,
+                ),
+                ("human", "{query}"),
+            ]
+
+        return rewrite_prompt | self.llm | StrOutputParser()
 
 
 class OpinionLLMService:
