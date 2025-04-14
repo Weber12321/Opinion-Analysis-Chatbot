@@ -204,7 +204,7 @@ class OpinionLLMService:
 
     def _create_summary_chain(self):
         summary_prompt = """
-        Summarize the following text in 3-5 sentences, focusing on key points:
+        Summarize the following text in 3-5 sentence with same language with the given text, focusing on key points:
         
         {text}
         """
