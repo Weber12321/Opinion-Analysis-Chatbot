@@ -4,6 +4,7 @@ import pandas as pd
 from typing import Dict
 
 from app.services.news_scraper import search_news
+from app.services.retriever import retrieve
 from pydantic import BaseModel, Field
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -24,10 +25,55 @@ class RAGLLMService:
     def __init__(self):
         """Initialize the LLM service with Open AI"""
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+        self.rag_agent = self._create_retriever_agent()
 
     def _create_retriever_agent(self):
         """Create a retriever for the LLM"""
         # Placeholder for actual retriever creation
+
+        tools = [retrieve]  # List of actual tool objects
+
+        agent_prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    """你是一個組織內 RAG 助理，需要判斷使用者的輸入是否符合內部文件內容，目前內部文件包含了平台手冊的資訊，這些資訊包含以下：
+        這份文件詳細列出了 KEYPO 平台目前提供的 API 功能。每個大標題代表一支獨立的 API，並解釋其運作邏輯。主要功能涵蓋：
+        監測與通知：
+        警報信：可自訂時間、頻率，針對關鍵字主題發送 Email 警報。
+        AI 分析與報告：
+        GPT 報告：利用大型語言模型自動生成輿情分析報告，包含聲量、關鍵字、概念分析等。
+        資料呈現與視覺化：
+        文章列表：展示相關文章詳細資訊（來源、情緒、互動數等），具備篩選、排序、編修功能。
+        聲量趨勢/資料分佈/傳播趨勢：以圖表視覺化呈現聲量隨時間變化、來源佔比、跨頻道傳播路徑。
+        熱門趨勢分析：
+        熱門關鍵字/HashTag/頻道/排行榜/熱詞網路：分析找出最受關注的關鍵字（結合詞頻與權重）、標籤、頻道（依聲量/情緒分類）、文章（依互動數）及關聯詞彙網絡。
+        意見領袖與社群分析：
+        關鍵領袖/人群發文領袖/人群熱門頻道/文章：識別具影響力的作者 (KOL) 及特定受眾關注的領袖、頻道與文章。
+        網路好感度/社群活躍度/網路互動力：分析整體情緒走向、社群討論熱度及互動數變化。
+        進階功能與工具：
+        啟用多維度/關鍵字風暴/探索概念：進行更深層次的關鍵字關聯比較、找出顯著詞彙、探索語意概念群。
+        競品比較：跨主題比較聲量、好感度、社群活躍度等多項指標。
+        報告下載：一鍵生成包含多種分析面向的綜合報告。
+        篩選/排除：提供強大的資料篩選（聚焦）與排除特定頻道、文章的功能。
+        總體來說，這些 API 提供了從基礎監測、資料整理、趨勢分析到深度洞察、報告產出等全方位的網路輿情數據服務。
+
+        + 如果使用者的輸入包含以上資訊或是試圖想要透過詢問問題了解以上資訊，則調用工具 retrieve 透過檢索向量資料庫 retriever，並回傳結果。
+        + 如果使用者的輸入不包含以上資訊或是不是試圖想要透過詢問問題了解以上資訊，則回覆以下內容: 我是組織內的智慧助理，目前僅針對文件內容做查詢以及回覆，請您根據平台相關資訊做提問！""",
+                ),
+                ("human", "{query}"),
+                MessagesPlaceholder(variable_name="agent_scratchpad"),
+            ]
+        )
+
+        # Create the agent runnable
+        agent = create_openai_tools_agent(self.llm, tools, agent_prompt)
+
+        # Create the executor which handles the tool call loop
+        executor = AgentExecutor(
+            agent=agent, tools=tools, verbose=True
+        )  # verbose=True shows the steps
+
         pass
 
 

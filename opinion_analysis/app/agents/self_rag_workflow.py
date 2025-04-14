@@ -1,14 +1,10 @@
 from io import BytesIO
 from typing import Dict, List, Any, Tuple, Optional, TypedDict, Annotated
-import os
-import glob
-from pydantic import BaseModel, Field
 
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
-from langchain_core.runnables import RunnablePassthrough
 from langchain_community.vectorstores import FAISS
 from langchain_text_splitters import (
     MarkdownHeaderTextSplitter,
@@ -16,7 +12,7 @@ from langchain_text_splitters import (
 )
 from langchain_core.documents import Document
 
-from app.services.llm_service import OpinionLLMService
+from app.services.llm_service import RAGLLMService
 from langgraph.graph import MessagesState, StateGraph, END
 
 
@@ -24,8 +20,8 @@ class SelfRAGState(TypedDict):
     """State for the Self-RAG workflow"""
 
     messages: List[Any]  # List of chat messages
-    query: str  # Current query
-    docs: List[Document]  # Retrieved documents
+    docs: List[str] | str  # Retrieved documents
+    is_retrieval_related: bool  # Whether the query is related to retrieval
     validated_docs: List[Document]  # Documents that passed validation
     response: str  # Generated response
     response_validated: bool  # Whether response passed validation
@@ -38,89 +34,8 @@ class SelfRAGWorkflow:
 
     def __init__(self, uploaded_files: Optional[List[BytesIO]] = None):
         self.retriever = self._build_vecter_retriever(uploaded_files)
-        self.llm_service = OpinionLLMService()
-        self.llm = ChatOpenAI(temperature=0)
+        self.llm_service = RAGLLMService()
         self.workflow = self._build_workflow()
-        self.top_k = 5
-        self.max_retrieval_attempts = 2
-
-    def _build_vecter_retriever(self, uploaded_files=None):
-        """Build the vector store for markdown document retrieval and return retriever.
-
-        Args:
-            uploaded_files: Optional list of BytesIO objects from Streamlit file uploads
-                           Each file should have 'name' attribute for file name
-        Returns:
-            A vector store retriever for document search
-        """
-        # Configure the header splitter for markdown documents
-        headers_to_split_on = [
-            ("#", "Header 1"),
-            ("##", "Header 2"),
-        ]
-
-        markdown_splitter = MarkdownHeaderTextSplitter(
-            headers_to_split_on=headers_to_split_on, strip_headers=False
-        )
-
-        # Set up character splitter for chunking
-        chunk_size = 600
-        chunk_overlap = 180
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=chunk_size, chunk_overlap=chunk_overlap
-        )
-
-        all_splits = []
-
-        # Process uploaded files if provided
-        if uploaded_files and len(uploaded_files) > 0:
-            for uploaded_file in uploaded_files:
-                try:
-                    # Read the file content from BytesIO
-                    file_content = uploaded_file.getvalue().decode("utf-8")
-
-                    # Get file name from the uploaded file
-                    file_name = getattr(uploaded_file, "name", "unnamed_document")
-
-                    # Process based on file type
-                    if file_name.endswith(".md"):
-                        # Process as markdown
-                        md_header_splits = markdown_splitter.split_text(file_content)
-
-                        # Add file metadata to each split
-                        for split in md_header_splits:
-                            split.metadata["source"] = "uploaded_file"
-                            split.metadata["document"] = file_name
-
-                        all_splits.extend(md_header_splits)
-                    else:
-                        # Process as plain text
-                        doc = Document(
-                            page_content=file_content,
-                            metadata={"source": "uploaded_file", "document": file_name},
-                        )
-                        all_splits.append(doc)
-
-                except Exception as e:
-                    print(
-                        f"Error processing uploaded file {getattr(uploaded_file, 'name', 'unnamed')}: {e}"
-                    )
-                    continue
-        else:
-            raise FileNotFoundError(
-                "No uploaded files provided for vector store creation."
-            )
-
-        # If no documents were processed, create a default empty document
-        if not all_splits:
-            raise ValueError("No documents were processed from the uploaded files.")
-        # Further split by characters if we have documents
-
-        final_splits = text_splitter.split_documents(all_splits)
-        # Create vector store and return retriever
-        vector_store = FAISS.from_documents(final_splits, OpenAIEmbeddings())
-
-        return vector_store.as_retriever(search_kwargs={"k": self.top_k})
 
     def _build_workflow(self):
         """Build the LangGraph workflow for the self-RAG agent.
@@ -189,45 +104,14 @@ class SelfRAGWorkflow:
     def retrieve_or_respond(self, state: SelfRAGState):
         """An agent which decide to retrieve relevant documents based on the query or reply the LLM answer directly"""
         # Extract the query from the latest human message
-        query = ""
-        for msg in reversed(state["messages"]):
-            if isinstance(msg, HumanMessage):
-                query = msg.content
-                break
-
-        # Store the query in the state
-        state["query"] = query
-
-        # Determine if we should use RAG or just respond with the LLM
-        should_retrieve_template = """
-        You are an AI assistant that determines if a query needs specific knowledge retrieval.
-        For queries about facts, documentation, specialized knowledge, or data, respond with YES.
-        For simple conversations, opinions, or general knowledge, respond with NO.
-        
-        Query: {query}
-        
-        Should I retrieve information to answer this query? Respond with YES or NO only.
-        """
-
-        should_retrieve_prompt = ChatPromptTemplate.from_template(
-            should_retrieve_template
+        response = self.llm_service.rag_agent.invoke(
+            {"query": state["messages"][-1].content}
         )
-        should_retrieve_chain = should_retrieve_prompt | self.llm | StrOutputParser()
-        retrieve_decision = (
-            should_retrieve_chain.invoke({"query": query}).strip().upper()
-        )
-
-        if retrieve_decision == "YES":
-            # Retrieve documents
-            docs = self.retriever.get_relevant_documents(query)
-            state["docs"] = docs
-
-            # Update retrieval attempts
-            state["retrieval_attempts"] = state.get("retrieval_attempts", 0) + 1
+        if isinstance(response["output"], str):
+            state["is_retrieval_related"] = False
         else:
-            # Skip retrieval
-            state["docs"] = []
-
+            state["is_retrieval_related"] = True
+        state["docs"] = response["output"]
         return state
 
     def validate_docs(self, state: SelfRAGState):
