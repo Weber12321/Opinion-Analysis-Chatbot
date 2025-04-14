@@ -175,3 +175,9 @@ cython_debug/
 
 # pdf
 *.pdf
+
+# Ignore all .md files directly within your_directory_name/
+opinion_analysis/fixtures/*.md
+
+# But DO NOT ignore the README.md directly inside your_directory_name/
+!opinion_analysis/fixtures/README.md

@@ -26,6 +26,7 @@ def main():
     """Build the vector store for markdown document retrieval and return retriever.
 
     Reads all markdown files from the fixtures directory and creates a vector store.
+    Ignores README.md files.
 
     Returns:
         A vector store retriever for document search
@@ -62,6 +63,11 @@ def main():
     ), f"Fixtures directory does not exist: {fixtures_dir}"
 
     markdown_files = glob.glob(os.path.join(fixtures_dir, "**/*.md"), recursive=True)
+
+    # Filter out README.md files
+    markdown_files = [
+        f for f in markdown_files if os.path.basename(f).lower() != "readme.md"
+    ]
 
     if not markdown_files:
         raise FileNotFoundError(
