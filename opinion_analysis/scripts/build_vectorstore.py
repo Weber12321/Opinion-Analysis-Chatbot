@@ -56,7 +56,7 @@ def main():
     all_splits = []
 
     # Find all markdown files in the fixtures directory
-    fixtures_dir = os.getnev("DOCUMENTS_PATH", "fixtures")
+    fixtures_dir = os.getenv("DOCUMENTS_PATH", "fixtures")
 
     assert os.path.exists(
         fixtures_dir
