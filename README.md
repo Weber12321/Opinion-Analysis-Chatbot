@@ -63,30 +63,54 @@ OPENAI_API_KEY=your_api_key_here
 REGION=tw-tzh
 ```
 
-4. Build and run the containers:
+4. Copy the environment variables with vectorstore information:
+
+```bash
+DOCUMENTS_PATH=fixtures
+VECTORSTORE_PATH=fixtures/vector_db
+```
+
+5. Build and run the containers:
 
 ```bash
 docker build -f opinion_analysis/Dockerfile -t opinion-analysis:develop .
 docker-compose up
 ```
 
-4. Access the application:
-   - Chat Interface: [http://localhost:8501](http://localhost:8501)
+6. Please follow the fixtures [README.md](opinion_analysis/fixtures/README.md) of the information for placing the `.md` file under the `opinion_analysis/fixtures` which you want to store and search with vectorstore.
+
+```bash
+fixtures
+├── README.md
+├── <your markdown file>
+├── ...
+└── ...
+```
+
+7. Access the application:
+   - Opinion Analysis Chatbot: [http://localhost:8501](http://localhost:8501)
+   - RAG Chatbot: [http://localhost:8501/chatbot_rag](http://localhost:8501/chatbot_rag)
 
 ## 4. Test with Chat Web
 
 Once the application is running, you can interact with the Opinion Analysis Chatbot through the Streamlit web interface:
 
-1. Navigate to [http://localhost:8501](http://localhost:8501) in your web browser
-2. Enter your query in the chat input field at the bottom of the page
-3. The chatbot will process your query, search for relevant news articles, and provide an analysis
+1. Navigate to [http://localhost:8501](http://localhost:8501) of [http://localhost:8501/chatbot_rag](http://localhost:8501/chatbot_rag) in your web browser.
+2. Follow the page instructions and enter your query in the chat input field at the bottom of the page.
+3. The chatbot will process your query, search for relevant news articles, and provide an analysis.
 
 ### Example Queries
 
 Try asking questions like:
 
-- "請協助我搜集去年總統大選的新聞。"
-- "替我分析 2025 立法委員大罷免的新聞。 "
+- For opinion analysis:
+  - 請協助我搜集去年總統大選的新聞。
+  - 替我分析 2025 立法委員大罷免的新聞。
+- For self RAG (Based on the default markdown expamle):
+  - KEYPO 的「熱門關鍵字」是如何計算出來的？
+  - 使用 KEYPO 的「警報信」功能時，使用者可以自訂哪些設定？
+- For other non-relevant question:
+  - 今天中午妳想吃什麼當作午餐？
 
 ### Features
 
@@ -95,6 +119,7 @@ Try asking questions like:
 - **Sentiment Analysis**: Analyzes the emotional tone of news articles
 - **Named Entity Recognition**: Identifies key people, organizations, and concepts
 - **Summary Generation**: Creates concise summaries of complex articles
+- **Self Retrieval-Augmented Generation**~: For searching, analyzing relevance from documents and double checking reponse, to provide the high quality document-based knowledgement.
 
 ## 5. Contact
 
@@ -102,7 +127,7 @@ For questions, issues, or contributions please contact:
 
 Weber Huang
 Email: doudi853@gmail.com
-GitHub: Weber12321
+GitHub: [Weber12321](https://github.com/Weber12321)
 
 ---
 
