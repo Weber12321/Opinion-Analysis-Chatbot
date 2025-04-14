@@ -1,5 +1,7 @@
 # Opinion Analysis Chatbot
 
+[![IMAGE ALT TEXT HERE]([https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_HERE](https://youtu.be/PIbQ0CPNqEE))
+
 ## 1. Introduction
 
 Opinion Analysis Chatbot is a specialized AI-powered assistant designed to analyze public opinion, sentiment trends, and news coverage. The system combines natural language processing with web scraping capabilities to provide comprehensive analyses of online discourse and news content.
