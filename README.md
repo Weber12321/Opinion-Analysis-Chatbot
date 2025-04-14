@@ -1,5 +1,7 @@
 # Opinion Analysis Chatbot
 
+###### Click below link for video demo!   
+###### 請點選以下來開啟影片說明！   
 [![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/PIbQ0CPNqEE/0.jpg)](https://www.youtube.com/watch?v=PIbQ0CPNqEE)
 
 ## 1. Introduction
