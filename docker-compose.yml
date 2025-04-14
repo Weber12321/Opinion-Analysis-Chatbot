@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  opinion_analysiopinion_analysiss:
+  server:
     image: opinion-analysis:develop
     container_name: opinion-analysis-opinion_analysis
     ports:
