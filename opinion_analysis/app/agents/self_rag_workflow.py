@@ -80,6 +80,7 @@ class SelfRAGWorkflow:
         if state["is_retrieval_related"]:
             return "validate_docs"
         else:
+            state["messages"] = [AIMessage(content=state["docs"])]
             return END
 
     def validate_docs(self, state):
@@ -156,6 +157,7 @@ class SelfRAGWorkflow:
 
     def check_max_generation(self, state):
         if state["response_validated"]:
+            state["messages"] = [AIMessage(content=state["response"])]
             return END
         else:
             if state["max_generation"] >= 2:
