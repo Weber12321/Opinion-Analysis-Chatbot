@@ -20,7 +20,18 @@ class SentimentGrader(BaseModel):
     )
 
 
-class LLMService:
+class RAGLLMService:
+    def __init__(self):
+        """Initialize the LLM service with Open AI"""
+        self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+    def _create_retriever_agent(self):
+        """Create a retriever for the LLM"""
+        # Placeholder for actual retriever creation
+        pass
+
+
+class OpinionLLMService:
     def __init__(self):
         """Initialize the LLM service with Open AI"""
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
