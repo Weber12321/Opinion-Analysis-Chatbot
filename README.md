@@ -1,6 +1,6 @@
 # Opinion Analysis Chatbot
 
-[![IMAGE ALT TEXT HERE]([https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID_HERE](https://youtu.be/PIbQ0CPNqEE))
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/PIbQ0CPNqEE/0.jpg)](https://www.youtube.com/watch?v=PIbQ0CPNqEE)
 
 ## 1. Introduction
 
