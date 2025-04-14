@@ -25,7 +25,6 @@ class SelfRAGWorkflow:
         rewritten_query: str = ""  # Rewritten query if any
 
     def __init__(self, uploaded_files: Optional[List[BytesIO]] = None):
-        self.retriever = self._build_vecter_retriever(uploaded_files)
         self.llm_service = RAGLLMService()
         self.workflow = self._build_workflow()
 
@@ -90,8 +89,8 @@ class SelfRAGWorkflow:
         validated_docs = []
 
         for doc in docs:
-            response = self.llm.document_validation_chain.invoke(
-                {"query": query, "document": doc.page_content}
+            response = self.llm_service.document_validation_chain.invoke(
+                {"query": query, "document": doc}
             ).binary_score
 
             # Check if document is validated as relevant
@@ -137,7 +136,7 @@ class SelfRAGWorkflow:
 
     def validate_response(self, state):
         """Validate the generated response twice with LLM response and query"""
-        query = state["query"]
+        query = state["messages"][-1].content
         response = state["response"]
 
         response = self.llm_service.response_validation_chain.invoke(
@@ -169,7 +168,7 @@ class SelfRAGWorkflow:
         """Rewrite the query if it failed in the previous stage"""
 
         new_query = self.llm_service.query_rewrite_chain.invoke(
-            {"query": state["query"]}
+            {"query": state["messages"][-1].content}
         )
         new_query = (
             "對不起，我無法查詢或整理您的問題，建議您將問題改寫以下新問法並再次查詢: \n"
@@ -178,38 +177,5 @@ class SelfRAGWorkflow:
         # Update state
         state["query_rewritten"] = True
         state["rewritten_query"] = new_query
-
-        return state
-
-    def generate_final_response(self, state: SelfRAGState):
-        """Generate the final response based on the rewritten query.
-        If query_rewrited, reply the message with the suggestion rewritten querys to ask user to rerun the workflow.
-        if not query_rewrited, reply the message with the final response which generated at generate_response stage.
-        """
-        # Check if query was rewritten
-        if state.get("query_rewritten", False):
-            original_query = state["query"]
-            rewritten_query = state["rewritten_query"]
-
-            final_response = f"""
-            I'm having trouble providing a complete answer to your question: "{original_query}"
-            
-            To better assist you, I suggest rephrasing your question. For example:
-            
-            "{rewritten_query}"
-            
-            This would help me provide a more accurate and helpful response.
-            """
-
-            # Add the final response as an AI message
-            state["messages"].append(AIMessage(content=final_response))
-        else:
-            # Use the generated response
-            response = state.get(
-                "response", "I apologize, but I couldn't generate a proper response."
-            )
-
-            # Add the generated response as an AI message
-            state["messages"].append(AIMessage(content=response))
 
         return state

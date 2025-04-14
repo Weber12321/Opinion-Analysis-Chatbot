@@ -15,7 +15,9 @@ def retrieve(query: str) -> Union[List[str] | str]:
         List[str]: A list of relevant document contents.
     """
     vectorstore = FAISS.load_local(
-        os.getenv("VECTORSTORE_PATH", "fixtures/vector_db"), OpenAIEmbeddings()
+        os.getenv("VECTORSTORE_PATH", "fixtures/vector_db"),
+        OpenAIEmbeddings(),
+        allow_dangerous_deserialization=True,
     )
 
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})

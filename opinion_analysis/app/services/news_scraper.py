@@ -1,7 +1,7 @@
 # app/services/news_scraper.py
 import os
 from typing import List, Dict
-from opinion_analysis.app.services.ner_extraction import ner_extractor
+from app.services.ner_extraction import ner_extractor
 import newspaper
 from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
 from langchain_community.tools import DuckDuckGoSearchResults

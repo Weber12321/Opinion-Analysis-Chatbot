@@ -30,15 +30,15 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 # Application header
-st.title("Opinion Analysis Chatbot")
+st.title("RAG Chatbot")
 st.markdown(
     """
     歡迎來到 RAG 機器人！這個聊天機器人專注於回答組織內文檔的問題。您可以詢問有關以下主題的問題：
     - KEYPO 的「熱門關鍵字」是如何計算出來的？
     - 使用 KEYPO 的「警報信」功能時，使用者可以自訂哪些設定？
     - KEYPO 的「GPT 報告」API 主要包含哪些分析面向？
-
-    * 請注意，若查詢與文檔無關內文機器人將不會進一步回答。
+      
+    請注意，若查詢與文檔無關內文機器人將不會進一步回答。
     """
 )
 
@@ -83,12 +83,7 @@ if prompt := st.chat_input("Ask about opinion analysis..."):
             st.session_state.thread_id = thread_id
 
         # Prepare initial state for the workflow
-        initial_state = {
-            "messages": lc_messages,
-            "is_search_related": False,
-            "search_results": [],
-            "analysis_results": {},
-        }
+        initial_state = {"messages": lc_messages, "max_generation": 2}
         # Process through workflow and get response
         with st.spinner("Processing your query..."):
             # Create progress bars for each step
@@ -117,18 +112,16 @@ with st.sidebar:
     st.header("About")
     st.info(
         """
-這個聊天機器人專門根據網路新聞進行觀點分析。
-它可以幫助你了解公眾情緒，追蹤熱門話題。
+這個機器人專門根據組織內文檔做查詢以及回覆。
+它可以幫助你解決針對組織內文檔內容問題解惑。
     """
     )
 
     st.header("Features")
     st.markdown(
         """
-        - 📰 即時新聞分析
-        - 🔍 命名實體識別
-        - 😊 情緒分析
-    """
+        🔍 向量查詢與問題改寫
+        """
     )
 
     # Clear chat button
